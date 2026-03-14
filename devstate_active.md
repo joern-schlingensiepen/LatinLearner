@@ -34,11 +34,15 @@ Die vollständige Analyse befindet sich in `docs/ANALYSIS.md`.
 
 ---
 
+## Offene TODOs
+
+- [ ] **Johannes Staub anrufen** — Abstimmung, wie das Projekt gemeinsam weiterentwickelt werden soll
+
 ## Geplante nächste Schritte
 
 1. **Entscheidung Ziel-Framework:** Festlegen, ob Modernisierung auf PyTorch, TensorFlow 2.x oder ein anderes Framework erfolgt
 2. **Entscheidung Modellarchitektur:** LSTM beibehalten oder auf Transformer-Architektur wechseln
-3. **Test-Framework klären:** `unittest` weiterführen oder auf `pytest` umsteigen
+3. ~~**Test-Framework klären:**~~ Entschieden: **pytest**
 4. **Portierung durchführen:**
    - Python-Version und Dependencies aktualisieren
    - Scraper und Datenbereinigung modernisieren (framework-unabhängig, geringer Aufwand)
