@@ -40,25 +40,28 @@ def clean_text(raw_text):
     output = remove_white_space(output)
     return output
     
-def clean_directory(input_directory, output_directory):
+def clean_directory(input_directory):
     """ Runs through all the files in the specified directory assuming that those are files from the
     Latin Library and cleans the data with the set of defined methods above. As the format of the files
     is not very consistent, we clean only the major items.
     I decided to not remove latin numbers from the text to give the ML algorithm also some understanding
     about those numbers.
     """
+    res = []
     list_of_files = os.listdir(input_directory)
     for file_name in list_of_files:
         if file_name in ignore_list:
+            continue
+        if not file_name.endswith('.txt'):
+            print ("Skipping file: ", file_name)
             continue
         print("Processing file: ", file_name)
         infile = open(input_directory + '/' + file_name)
         raw = infile.read()
         cleaned_text = clean_text(raw)
         infile.close()
-        outfile = open(output_directory + '/' + file_name, 'w')
-        outfile.write(cleaned_text)
-        outfile.close()
+        res.append(cleaned_text)
+    return " ".join(res)
     
     
 def find_duplicates(directory):
@@ -73,6 +76,8 @@ def find_duplicates(directory):
     for file_name in list_of_files:
         if file_name in ignore_list:
             continue
+        if not file_name.endswith('.txt'):
+            continue
         file = open(directory + '/' + file_name)
         raw = file.read()
         hash_value = raw.__hash__()
@@ -84,5 +89,21 @@ def find_duplicates(directory):
             file_count += 1
     
     print('Found duplicates: ', duplicate_count) 
-    print('Found unique files: ', file_count)  
-      
+    print('Found unique files: ', file_count) 
+    return duplicate_count > 0 
+
+def main():
+    input_directory = 'library/'
+    if (find_duplicates(input_directory)):
+        print("There are duplicates in the directory, please remove them before continuing.")
+        return
+    cleaned_text = clean_directory(input_directory)
+    print ("Cleaned text len: ", len(cleaned_text))
+    outfile = open('cleaned_text.txt', 'w')
+    outfile.write(cleaned_text)
+    outfile.close()
+    print ("Done cleaning the text.")
+
+# run main if this script is executed
+if __name__ == "__main__":
+    main()

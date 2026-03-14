@@ -1,5 +1,15 @@
 from urllib.request import urlopen
 from bs4 import BeautifulSoup
+import os
+
+
+### https://github.com/cltk/cltk/blob/master/notebooks/CLTK%20Demonstration.ipynb
+### https://docs.cltk.org/en/latest/quickstart.html
+### https://docs.cltk.org/en/latest/cltk.core.html#cltk.core.data_types.Word.embedding
+
+
+### https://mljar.com/blog/jupyter-notebook-pdf/
+
 
 
 class LatinScraper:
@@ -12,10 +22,10 @@ class LatinScraper:
     probably need to change and adapt. That's the reason why I build in 
     manual control so that you can check what's going on.
     """
-    LATIN_BASE_URL = 'http://thelatinlibrary.com/'
+    LATIN_BASE_URL = 'https://thelatinlibrary.com/'
     DATA_DIRECTORY = './library/'
     VERBOSE = True
-    visited = {'justin.html' : True, 'victor.html' : True, 'ammianus.html' : True, 'apuleius.html' : True, 'aug.html' : True, 'index.html' : True, 'classics.html' : True}
+    visited = {}#{'justin.html' : True, 'victor.html' : True, 'ammianus.html' : True, 'apuleius.html' : True, 'aug.html' : True, 'index.html' : True, 'classics.html' : True}
     book_counter = 1
     visited_list = []
 
@@ -26,10 +36,15 @@ class LatinScraper:
             input("PLEASE CHECK Document")  
         return cleaned_text
 
-    def generate_filename(self, title):
+    def generate_filename(self, url):
         # Clean characters from the title that are not allowed in filenames
-        filename = ''.join(character for character in title if character.isalnum())
-        filename = self.DATA_DIRECTORY + str(self.book_counter) + filename + '.txt'
+        filename = url.replace(self.LATIN_BASE_URL, '')
+        filename = filename.replace('/', '_')
+        filename = filename.replace('.shtml', '')
+        filename = filename.replace('.html', '')
+        filename = filename.replace('.htm', '')
+        filename = filename.replace('?', '')
+        filename = self.DATA_DIRECTORY + filename + '.txt'
         return filename
 
     def is_book_site(self, tables):
@@ -51,11 +66,11 @@ class LatinScraper:
                 return True
         return False
     
-    def scrape_book(self, book_soup):    
+    def scrape_book(self, book_soup, filename):    
         book_text = book_soup.get_text()
         cleaned_book_text = self.remove_non_ascii_characters(book_text)
         book_title = book_soup.title.string
-        filename = self.generate_filename(book_title)
+        # filename = self.generate_filename(book_title)
         if self.VERBOSE: print("Processing and writing to file: ", filename)
         file = open(filename, "w")
         file.write(cleaned_book_text)
@@ -71,7 +86,7 @@ class LatinScraper:
                     continue
                 if self.VERBOSE: print("Looking at ", item)
                 
-                response = input("Should I process this item? (y/n/e(xit))?")
+                response = 'y' #input("Should I process this item? (y/n/e(xit))?")
                 if response == 'y':
                     self.process_reference(item, directory)
                 elif response == 'e':
@@ -84,14 +99,20 @@ class LatinScraper:
         if item['href'] in self.visited:
             if self.VERBOSE: print("==> Already visited!")
             return
+        self.visited[item['href']] = True
     
         url = self.LATIN_BASE_URL + directory + item['href']
         try:
+            filename = self.generate_filename(url)
+            print ("Filename: ", filename)
+            if os.path.isfile(filename):
+                if self.VERBOSE: print("File already exists, skipping...")
+                return
             website = urlopen(url)
             soup = BeautifulSoup(website, 'html.parser')
             next_tables = soup.find_all('table')
             if self.is_book_site(next_tables):
-                self.scrape_book(soup)
+                self.scrape_book(soup, filename)
             else:
                 next_directory = directory + ('/').join(item['href'].split('/')[:-1]) 
                 if next_directory != '':
@@ -99,7 +120,7 @@ class LatinScraper:
                     if self.VERBOSE: print(next_directory)
                      
                 if self.VERBOSE: print("Found {} tables in this document.".format(len(next_tables)))
-                response = input("Continue? y/n/e(xit)")
+                response = 'y' #input("Continue? y/n/e(xit)")
                 
                 if response == 'y':
                     self.process_table_site(next_tables, next_directory)
@@ -107,12 +128,13 @@ class LatinScraper:
                     exit()
                 else:
                     return
-        except:
+        except Exception as e:
             if self.VERBOSE: print("Error opening this site...", url)
+            if self.VERBOSE: print(e)
             return
 
     def process_main_site(self):  
-        main_site = urlopen("http://thelatinlibrary.com")
+        main_site = urlopen("https://thelatinlibrary.com")
         main_soup = BeautifulSoup(main_site, 'html.parser')
         tables = main_soup.find_all('table')
         #tables[1] contains the right information on the main page for the author table

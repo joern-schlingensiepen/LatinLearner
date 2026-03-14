@@ -106,8 +106,12 @@ ENV/
 /.project
 /.pydevproject
 
+# IDE
+.vscode/
+
 # project
 library
 clean_library
+cleaned_text.txt
 Perseus
 /.DS_Store
